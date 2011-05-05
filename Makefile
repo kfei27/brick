@@ -7,6 +7,8 @@
 LDFLAGS :=
 # OpenGL
 LDFLAGS += -L /lib/w32api
+#LDFLAGS += -static
+LDFLAGS += -dynmic
 LDFLAGS += -lopengl32
 LDFLAGS += -lgdi32
 LDFLAGS += -lglu32
@@ -20,14 +22,19 @@ CPPFLAGS :=
 #CPPFLAGS += -I /usr/include/w32api
 
 CC :=
+#CC += gcc
 CC += g++
 # Use OS-supplied runtime.
 CC += -mno-cygwin
+# Detach mingw console. Can also use FreeConsole() to free it and AllocConsole() to load a new one;
+CC += -mwindows
+CC += -DOFFICECFG
+#CC += -DTESTSCENE
 
 # Optimization
 CFLAGS :=
 # Produce debugging information
-CFLAGS += -g 
+CFLAGS += -g
 # Do not optimize
 #CFLAGS += -O0
 # Optimize even more
@@ -37,7 +44,7 @@ CFLAGS += -g
 # Optimize for size
 #CFLAGS += -Os
 # Verbose
-#CFLAGS += -v 
+#CFLAGS += -v
 
 PROGS = \
     brick
@@ -49,10 +56,16 @@ all: $(PROGS)
 
 .SUFFIXES: .c .o
 
-brick : main.o
+brick : main.o modOpenGL.o modEngine.o
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 main.o : main.cpp
+	$(CC) $(CFLAGS) -c $<
+
+modOpenGL.o : modOpenGL.cpp
+	$(CC) $(CFLAGS) -c $<
+
+modEngine.o : modEngine.cpp
 	$(CC) $(CFLAGS) -c $<
 
 .PHONY : clean dependencies
@@ -61,5 +74,7 @@ clean:
 	$(RM) $(PROGS) *.o *.gch
 
 dependencies:
-#To see what DLLs it's using:
+# Check dependent DLLs.
 	objdump -p $(PROGS) | grep "DLL Name"
+# Recursive result.
+	cygcheck ./$(PROGS)
